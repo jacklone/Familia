@@ -32,11 +32,42 @@ InferenceEngine::InferenceEngine(const std::string& model_dir,
     LOG(INFO) << "InferenceEngine initialize successfully!";
 }
 
-int InferenceEngine::infer(const std::vector<std::string>& input, LDADoc& doc) {
+    int InferenceEngine::infer(const std::vector<std::string>& input, LDADoc& doc) {
+        fix_random_seed(); // 固定随机数种子, 保证同样输入下推断的的主题分布稳定
+        doc.init(_model->num_topics());
+        doc.set_alpha(_model->alpha());
+        for (const auto& token : input) {
+            int id = _model->term_id(token);
+            if (id != OOV) {
+                int init_topic = rand_k(_model->num_topics());
+                doc.add_token({init_topic, id});
+            }
+        }
+
+        lda_infer(doc, 20, 50);
+
+        return 0;
+    }
+
+int InferenceEngine::infer(const std::vector<std::string>& input_title,
+                           const std::vector<std::string>& input_content,
+                           LDADoc& doc,
+                           int weight
+) {
     fix_random_seed(); // 固定随机数种子, 保证同样输入下推断的的主题分布稳定
     doc.init(_model->num_topics());
     doc.set_alpha(_model->alpha());
-    for (const auto& token : input) {
+    for (const auto& token : input_title) {
+        int id = _model->term_id(token);
+        if (id != OOV) {
+            for (int i=0; i<weight; i++) {
+                int init_topic = rand_k(_model->num_topics());
+                doc.add_token({init_topic, id});
+            }
+        }
+    }
+
+    for (const auto& token : input_content) {
         int id = _model->term_id(token);
         if (id != OOV) {
             int init_topic = rand_k(_model->num_topics());
@@ -49,13 +80,56 @@ int InferenceEngine::infer(const std::vector<std::string>& input, LDADoc& doc) {
     return 0;
 }
 
-int InferenceEngine::infer(const std::vector<std::vector<std::string>>& input, SLDADoc& doc) {
+    int InferenceEngine::infer(const std::vector<std::vector<std::string>>& input, SLDADoc& doc) {
+        fix_random_seed(); // 固定随机数种子, 保证同样输入下推断的的主题分布稳定
+        doc.init(_model->num_topics());
+        doc.set_alpha(_model->alpha());
+        std::vector<int> words;
+        int init_topic;
+        for (const auto& sent : input) {
+            for (const auto& token : sent) {
+                int id = _model->term_id(token);
+                if (id != OOV) {
+                    words.push_back(id);
+                }
+            }
+            // 随机初始化
+            init_topic = rand_k(_model->num_topics());
+            doc.add_sentence({init_topic, words});
+            words.clear();
+        }
+
+        slda_infer(doc, 20, 50);
+
+        return 0;
+    }
+
+int InferenceEngine::infer(const std::vector<std::vector<std::string>>& input_title,
+                           const std::vector<std::vector<std::string>>& input_content,
+                           SLDADoc& doc,
+                           int weight
+) {
     fix_random_seed(); // 固定随机数种子, 保证同样输入下推断的的主题分布稳定
     doc.init(_model->num_topics());
     doc.set_alpha(_model->alpha());
     std::vector<int> words;
     int init_topic;
-    for (const auto& sent : input) {
+    for (const auto& sent : input_title) {
+        for (const auto& token : sent) {
+            int id = _model->term_id(token);
+            if (id != OOV) {
+                for (int i = 0; i < weight; ++i) {
+                    words.push_back(id);
+                }
+            }
+        }
+        // 随机初始化
+        init_topic = rand_k(_model->num_topics());
+        doc.add_sentence({init_topic, words});
+        words.clear();
+    }
+
+    for (const auto& sent : input_content) {
         for (const auto& token : sent) {
             int id = _model->term_id(token);
             if (id != OOV) {

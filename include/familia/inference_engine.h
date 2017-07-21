@@ -38,11 +38,21 @@ public:
     // 对input的输入进行LDA主题推断，输出结果存放在doc中
     // 其中input是分词后字符串的集合
     int infer(const std::vector<std::string>& input, LDADoc& doc);
+    int infer(const std::vector<std::string>& input_title,
+              const std::vector<std::string>& input_content,
+              LDADoc& doc,
+              int title_weight=5
+    );
 
     // 对input的输入进行SentenceLDA主题推断，输出结果存放在doc中
     // 其中input是句子的集合
     int infer(const std::vector<std::vector<std::string>>& input, SLDADoc& doc);
-    
+    int infer(const std::vector<std::vector<std::string>>& input_title,
+              const std::vector<std::vector<std::string>>& input_content,
+              SLDADoc& doc,
+              int title_weight=5
+    );
+
     // REQUIRE: 总轮数需要大于burn-in迭代轮数, 其中总轮数越大，得到的文档主题分布越平滑
     void lda_infer(LDADoc& doc, int burn_in_iter, int total_iter) const;
     

@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package nocode.extractapi;
+
+service FamiliaApi {
+  /*
+  */
+  rpc doLda (LdaRequest) returns (LdaReply) {}
+
+}
+
+
+message News {
+  int32 newsId = 1;
+  string title = 2;
+  string content = 3;  // cleanContent
+}
+
+message LdaRequest {
+  News news = 1;
+  int32 weight = 2;
+}
+
+message LdaTopic {
+  int32 tid = 1;  // topic id
+  float prob = 2; // topic probability
+}
+
+message LdaReply {
+  string error = 1;  // length of 0 if success
+  repeated LdaTopic topics = 2;
+}
+

@@ -6,6 +6,7 @@ ifndef DEPS_PATH
 DEPS_PATH = $(shell pwd)/third_party
 endif
 
+PROTOC = /usr/local/bin/protoc
 ifndef PROTOC
 PROTOC = ${DEPS_PATH}/bin/protoc
 endif
